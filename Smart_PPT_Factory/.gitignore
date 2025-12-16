@@ -8,8 +8,7 @@ __pycache__/
 *.so
 
 # 输出文件
-output/
-*.pptx
+output/*.pptx
 
 # 日志文件
 *.log
