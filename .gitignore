@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 环境变量
+.env
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 输出文件
+Smart_PPT_Factory/output/*.pptx
+Smart_PPT_Factory/data/extracted_images/
+Smart_PPT_Factory/data/raw_content.txt
+Smart_PPT_Factory/data/debug_json.txt
+Smart_PPT_Factory/data/test_pyramid.png
+
+# 日志文件
+*.log
+error.log
+pip_install.log
+
+# 临时文件
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+
+# 测试文件
+test_*.py
+*_test.py

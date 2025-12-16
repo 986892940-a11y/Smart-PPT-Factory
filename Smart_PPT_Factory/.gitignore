@@ -1,0 +1,25 @@
+# 环境变量文件
+.env
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 输出文件
+output/
+*.pptx
+
+# 日志文件
+*.log
+data/debug_response.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 临时文件
+data/raw_content.txt
