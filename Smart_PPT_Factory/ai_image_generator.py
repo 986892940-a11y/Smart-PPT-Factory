@@ -32,7 +32,7 @@ def generate_image(prompt, aspect_ratio="16:9"):
                 contents=prompt
             )
             
-            # Gemini返回的是图片数据
+            # 从response中提取图片数据
             if hasattr(response, 'candidates') and response.candidates:
                 for part in response.candidates[0].content.parts:
                     if hasattr(part, 'inline_data'):
@@ -58,7 +58,7 @@ def generate_image(prompt, aspect_ratio="16:9"):
                 image_data = response.generated_images[0].image.image_bytes
                 return io.BytesIO(image_data)
             else:
-                print(f"  ⚠️ Imagen模型未返回图片")
+                print(f"  ⚠️ Imagen模型未返回图片数据")
                 return None
             
     except Exception as e:

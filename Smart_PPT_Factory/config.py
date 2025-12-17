@@ -11,8 +11,7 @@ if not API_KEY:
 
 # 模型配置
 TEXT_MODEL = "gemini-2.0-flash-exp"
-IMAGE_MODEL = "imagen-4.0-fast-generate-001"  # Imagen 4 Fast (快速稳定)
-# IMAGE_MODEL = "gemini-3-pro-image-preview"  # Nano Banana Pro (可选，生成较慢)
+IMAGE_MODEL = "gemini-3-pro-image-preview"  # Gemini 3 Pro Image (中文支持最好)
 
 # 路径配置
 JSON_PATH = "Smart_PPT_Factory/data/course.json"
