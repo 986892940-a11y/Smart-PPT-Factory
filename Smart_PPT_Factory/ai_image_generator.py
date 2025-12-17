@@ -10,6 +10,53 @@ import config
 
 client = genai.Client(api_key=config.API_KEY)
 
+
+def simplify_intro_text(intro_text, max_length=150):
+    """
+    使用AI精简课堂引入内容
+    
+    参数:
+        intro_text: 原始课堂引入文本
+        max_length: 最大字符数
+    
+    返回:
+        精简后的文本
+    """
+    if len(intro_text) <= max_length:
+        return intro_text
+    
+    try:
+        print(f"  📝 课堂引入内容较长({len(intro_text)}字)，正在精简...")
+        
+        prompt = f"""
+请将以下课堂引入内容精简到{max_length}字以内，保留核心信息和吸引力：
+
+原文：
+{intro_text}
+
+要求：
+1. 保留关键信息和引入主题
+2. 保持语言生动有趣
+3. 适合高中生理解
+4. 字数控制在{max_length}字以内
+5. 只返回精简后的文本，不要其他说明
+
+精简后的文本：
+"""
+        
+        response = client.models.generate_content(
+            model=config.TEXT_MODEL,
+            contents=prompt
+        )
+        
+        simplified = response.text.strip()
+        print(f"  ✅ 已精简至{len(simplified)}字")
+        return simplified
+        
+    except Exception as e:
+        print(f"  ⚠️ 精简失败: {e}，使用原文截取")
+        return intro_text[:max_length] + "..."
+
 def generate_image(prompt, aspect_ratio="16:9"):
     """
     生成AI图片
@@ -126,20 +173,31 @@ def generate_lecture_title_image(title):
 def generate_intro_image(intro_text):
     """
     生成课堂引入配图
-    要求：与引入内容相关，吸引注意力
+    要求：与引入内容相关，吸引注意力，精美有趣
     """
-    # 提取关键词
-    keywords = intro_text[:100]
+    # 提取关键词（前200字符）
+    keywords = intro_text[:200] if len(intro_text) > 200 else intro_text
     
     prompt = f"""
-    Create an engaging illustration for a class introduction.
-    Content: {keywords}
-    Style: Warm, inviting, educational
-    Requirements:
-    - Related to the introduction content
-    - Visually appealing and engaging
-    - Suitable for educational setting
-    - Not too distracting
+    Create a beautiful and engaging illustration for a class introduction.
+    
+    Content context: {keywords}
+    
+    Style requirements:
+    - Warm, inviting, and educational atmosphere
+    - Visually appealing with vibrant colors
+    - Hand-drawn or watercolor style preferred
+    - Include decorative elements related to the topic
+    - Suitable for high school students
+    - Professional yet fun and engaging
+    
+    Composition:
+    - Central focus on the main theme
+    - Decorative borders or corner elements
+    - Balance between illustration and empty space
+    - Should complement text content, not overwhelm it
+    
+    The image should capture students' attention and set a positive tone for the lesson!
     """
     
     return generate_image(prompt, aspect_ratio="16:9")

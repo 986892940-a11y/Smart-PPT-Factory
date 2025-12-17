@@ -13,7 +13,8 @@ from ai_image_generator import (
     generate_lecture_title_image,
     generate_intro_image,
     generate_knowledge_point_image,
-    generate_learning_objectives_image
+    generate_learning_objectives_image,
+    simplify_intro_text
 )
 from slide_builder import SlideBuilder
 
@@ -196,10 +197,31 @@ def generate_ppt():
         builder.add_image(slide, course_system_img, left=2, top=2, width=12, height=6)
     slide_count += 1
     
-    # ========== 3. 讲义标题（布局2）- 有图片占位符 ==========
-    print("  📝 [3] 讲义标题")
-    lecture_title = data.get("lecture_title", "本节课主题")
+    # ========== 3. 课堂引入（布局2）- 标题+图片+内容 ==========
+    print("  🎬 [3] 课堂引入")
+    class_intro = data.get("class_intro", "欢迎来到本节课！")
     slide = builder.create_slide(2)
+    
+    # 精简内容（如果太长）
+    intro_text = simplify_intro_text(class_intro, max_length=150)
+    
+    # 填充占位符
+    for ph in slide.placeholders:
+        idx = ph.placeholder_format.idx
+        if idx == 10:  # 标题
+            ph.text = "课堂引入"
+        elif idx == 12:  # 内容
+            ph.text = intro_text
+    
+    # 生成并填充图片
+    intro_img = generate_intro_image(class_intro)
+    fill_picture_placeholder(slide, intro_img)
+    slide_count += 1
+    
+    # ========== 4. 讲义标题（布局3）- 有图片占位符 ==========
+    print("  📝 [4] 讲义标题")
+    lecture_title = data.get("lecture_title", "本节课主题")
+    slide = builder.create_slide(3)
     
     # 填充标题占位符
     for ph in slide.placeholders:
@@ -211,10 +233,10 @@ def generate_ppt():
     fill_picture_placeholder(slide, title_img)
     slide_count += 1
     
-    # ========== 4. 学习目标（布局3）- 标题+图片占位符 ==========
-    print("  🎯 [4] 学习目标")
+    # ========== 5. 学习目标（布局4）- 标题+图片占位符 ==========
+    print("  🎯 [5] 学习目标")
     objectives = data.get("learning_objectives", ["暂无学习目标"])
-    slide = builder.create_slide(3)
+    slide = builder.create_slide(4)
     
     # 填充标题占位符
     for ph in slide.placeholders:
@@ -233,18 +255,18 @@ def generate_ppt():
     
     slide_count += 1
     
-    # ========== 5. 学习目标思维导图（布局4）- 图片占位符 ==========
+    # ========== 6. 学习目标思维导图（布局5）- 图片占位符 ==========
     mindmap_img = get_mindmap_image(data, "learning_objectives")
     if mindmap_img:
-        print("  🗺️ [5] 学习目标思维导图")
-        slide = builder.create_slide(4)
+        print("  🗺️ [6] 学习目标思维导图")
+        slide = builder.create_slide(5)
         fill_picture_placeholder(slide, mindmap_img)
         slide_count += 1
     
-    # ========== 6. 考情（布局5）==========
-    print("  📊 [5] 考情分析")
+    # ========== 7. 考情（布局6）==========
+    print("  📊 [7] 考情分析")
     exam_analysis = data.get("exam_analysis", "暂无考情分析")
-    slide = builder.create_slide(5)
+    slide = builder.create_slide(6)
     
     for ph in slide.placeholders:
         idx = ph.placeholder_format.idx
@@ -272,9 +294,9 @@ def generate_ppt():
         
         print(f"\n    知识点 {i}: {kp_title}")
         
-        # 6. 知识点切片标题（布局6）- 有图片占位符
+        # 知识点切片标题（布局7）- 有图片占位符
         print(f"      [{slide_count+1}] 切片标题")
-        slide = builder.create_slide(6)
+        slide = builder.create_slide(7)
         for ph in slide.placeholders:
             if ph.placeholder_format.type == 1:
                 ph.text = kp_title
@@ -283,9 +305,9 @@ def generate_ppt():
         fill_picture_placeholder(slide, kp_title_img)
         slide_count += 1
         
-        # 7. 知识点（布局7）- 有图片占位符
+        # 知识点（布局8）- 有图片占位符
         print(f"      [{slide_count+1}] 知识点内容")
-        slide = builder.create_slide(7)
+        slide = builder.create_slide(8)
         for ph in slide.placeholders:
             idx = ph.placeholder_format.idx
             if idx == 0:
@@ -297,32 +319,32 @@ def generate_ppt():
         fill_picture_placeholder(slide, kp_img)
         slide_count += 1
         
-        # 8. 开口说（布局8）- 只在第一个知识点后
+        # 开口说（布局9）- 只在第一个知识点后
         if i == 1:
             discussion = kp.get("discussion") or "请思考并讨论相关问题"
             print(f"      [{slide_count+1}] 开口说")
-            slide = builder.create_slide(8)
+            slide = builder.create_slide(9)
             for ph in slide.placeholders:
                 if ph.placeholder_format.idx == 10:
                     ph.text = discussion
             slide_count += 1
         
-        # 9. 经典例题母题（布局9）
+        # 经典例题母题（布局10）
         example_mother = kp.get("example_mother") or ""
         if example_mother:
             print(f"      [{slide_count+1}] 经典例题（母题）")
-            slide = builder.create_slide(9)
+            slide = builder.create_slide(10)
             for ph in slide.placeholders:
                 if ph.placeholder_format.idx == 10:
                     ph.text = example_mother
             slide_count += 1
         
-        # 10. 经典例题变式（布局10）
+        # 经典例题变式（布局11）
         example_variant = kp.get("example_variant") or ""
         method = kp.get("method") or ""
         if example_variant or method:
             print(f"      [{slide_count+1}] 经典例题（变式/方法）")
-            slide = builder.create_slide(10)
+            slide = builder.create_slide(11)
             for ph in slide.placeholders:
                 idx = ph.placeholder_format.idx
                 if idx == 10:
@@ -331,22 +353,22 @@ def generate_ppt():
                     ph.text = method
             slide_count += 1
     
-    # ========== 11. 上台讲（布局11）- 所有知识点完成后 ==========
+    # ========== 上台讲（布局12）- 所有知识点完成后 ==========
     print(f"\n  🎤 [{slide_count+1}] 上台讲")
-    slide = builder.create_slide(11)
+    slide = builder.create_slide(12)
     for ph in slide.placeholders:
         if ph.placeholder_format.idx == 10:
             ph.text = "请结合所学知识点，上台分享你的理解和心得"
     slide_count += 1
     
-    # ========== 12. 课堂总结过渡（布局12）==========
+    # ========== 课堂总结过渡（布局13）==========
     print(f"  📋 [{slide_count+1}] 课堂总结过渡")
-    slide = builder.create_slide(12)
+    slide = builder.create_slide(13)
     slide_count += 1
     
-    # ========== 13. 课堂总结内容（布局13）- 有图片占位符 ==========
+    # ========== 课堂总结内容（布局14）- 有图片占位符 ==========
     print(f"  📋 [{slide_count+1}] 课堂总结内容")
-    slide = builder.create_slide(13)
+    slide = builder.create_slide(14)
     # 优先使用提取的思维导图，否则AI生成
     summary_mindmap = get_mindmap_image(data, "summary")
     if summary_mindmap:
@@ -357,32 +379,32 @@ def generate_ppt():
         fill_picture_placeholder(slide, summary_img)
     slide_count += 1
     
-    # ========== 14. 出门测过渡（布局14）==========
+    # ========== 出门测过渡（布局15）==========
     print(f"  ✅ [{slide_count+1}] 出门测过渡")
-    slide = builder.create_slide(14)
+    slide = builder.create_slide(15)
     slide_count += 1
     
-    # ========== 15. 出门测计时（布局15）==========
+    # ========== 出门测计时（布局16）==========
     print(f"  ⏱️ [{slide_count+1}] 出门测计时")
     quiz_content = data.get("quiz_content") or "请完成讲义上的测试题"
-    slide = builder.create_slide(15)
+    slide = builder.create_slide(16)
     for ph in slide.placeholders:
         if ph.placeholder_format.type == 1:
             ph.text = quiz_content
     slide_count += 1
     
-    # ========== 16. 作业布置（布局16）==========
+    # ========== 作业布置（布局17）==========
     print(f"  📝 [{slide_count+1}] 作业布置")
     homework = data.get("homework", "完成对应练习题")
-    slide = builder.create_slide(16)
+    slide = builder.create_slide(17)
     for ph in slide.placeholders:
         if ph.placeholder_format.idx == 10:
             ph.text = homework
     slide_count += 1
     
-    # ========== 17. 告别（布局17）==========
+    # ========== 告别（布局18）==========
     print(f"  👋 [{slide_count+1}] 告别")
-    slide = builder.create_slide(17)
+    slide = builder.create_slide(18)
     slide_count += 1
     
     # 4. 保存文件
