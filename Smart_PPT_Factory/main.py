@@ -299,7 +299,7 @@ def generate_ppt():
         
         # 8. 开口说（布局8）- 只在第一个知识点后
         if i == 1:
-            discussion = kp.get("discussion", "请思考并讨论相关问题")
+            discussion = kp.get("discussion") or "请思考并讨论相关问题"
             print(f"      [{slide_count+1}] 开口说")
             slide = builder.create_slide(8)
             for ph in slide.placeholders:
@@ -308,7 +308,7 @@ def generate_ppt():
             slide_count += 1
         
         # 9. 经典例题母题（布局9）
-        example_mother = kp.get("example_mother", "")
+        example_mother = kp.get("example_mother") or ""
         if example_mother:
             print(f"      [{slide_count+1}] 经典例题（母题）")
             slide = builder.create_slide(9)
@@ -318,8 +318,8 @@ def generate_ppt():
             slide_count += 1
         
         # 10. 经典例题变式（布局10）
-        example_variant = kp.get("example_variant", "")
-        method = kp.get("method", "")
+        example_variant = kp.get("example_variant") or ""
+        method = kp.get("method") or ""
         if example_variant or method:
             print(f"      [{slide_count+1}] 经典例题（变式/方法）")
             slide = builder.create_slide(10)

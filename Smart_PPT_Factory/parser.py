@@ -8,7 +8,7 @@ import config
 
 # 配置区
 MODEL_NAME = "gemini-2.0-flash-exp"  # 使用Gemini 2.0 Flash进行内容提取
-PDF_FILE = "Smart_PPT_Factory/data/高中语文_高一_2025寒假_小组课_张三.pdf"
+PDF_FILE = "Smart_PPT_Factory/data/高中语文_高一_2025寒假_小组课_张三.pdf"  # 当前要处理的PDF
 DEFAULT_PDF = "Smart_PPT_Factory/data/source.pdf"
 INPUT_FILE = config.INPUT_FILE
 OUTPUT_FILE = config.JSON_PATH
