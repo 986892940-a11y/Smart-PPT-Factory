@@ -173,33 +173,202 @@ def generate_lecture_title_image(title):
 def generate_intro_image(intro_text):
     """
     生成课堂引入配图
-    要求：与引入内容相关，吸引注意力，精美有趣
+    要求：根据引入内容生成纯装饰性配图，不包含文字
     """
-    # 提取关键词（前200字符）
-    keywords = intro_text[:200] if len(intro_text) > 200 else intro_text
+    # 使用AI提取关键主题
+    try:
+        print(f"  📝 分析课堂引入内容，提取视觉主题...")
+        
+        analysis_prompt = f"""
+请分析以下课堂引入内容，提取其核心主题和视觉元素，用于生成配图。
+
+课堂引入内容：
+{intro_text}
+
+请用英文简短描述（50词以内）：
+1. 主题关键词（如：literature, books, Chinese classics, reading, study等）
+2. 适合的视觉元素（如：ancient scrolls, traditional Chinese books, students reading, library等）
+3. 氛围和色调（如：warm, scholarly, traditional Chinese style等）
+
+只返回英文描述，不要其他说明：
+"""
+        
+        response = client.models.generate_content(
+            model=config.TEXT_MODEL,
+            contents=analysis_prompt
+        )
+        
+        theme_description = response.text.strip()
+        print(f"  ✅ 主题提取完成")
+        
+    except Exception as e:
+        print(f"  ⚠️ 主题提取失败: {e}，使用默认主题")
+        theme_description = "Chinese literature, classic books, traditional scrolls, warm scholarly atmosphere"
     
     prompt = f"""
-    Create a beautiful and engaging illustration for a class introduction.
+Create a beautiful, decorative illustration for a Chinese language class introduction.
+
+THEME AND VISUAL ELEMENTS:
+{theme_description}
+
+CRITICAL REQUIREMENTS:
+1. NO TEXT OR CHINESE CHARACTERS in the image
+2. Pure decorative illustration only
+3. Traditional Chinese educational aesthetic
+4. Warm, inviting colors (earth tones, soft reds, golds)
+5. Hand-drawn or watercolor style
+
+VISUAL ELEMENTS TO INCLUDE:
+- Traditional Chinese books, scrolls, or manuscripts
+- Decorative borders with Chinese patterns
+- Scholarly items (brush, ink, paper)
+- Subtle cultural elements (plum blossoms, bamboo, clouds)
+- Open books or scrolls as focal points
+
+COMPOSITION:
+- Decorative frame or border design
+- Central illustration area
+- Balanced, harmonious layout
+- Professional yet artistic style
+- Suitable for high school students
+
+STYLE:
+- Hand-painted watercolor aesthetic
+- Traditional Chinese art influence
+- Warm, scholarly atmosphere
+- Elegant and refined
+- Not too busy or cluttered
+
+The image should be purely decorative and complement the text content without containing any words!
+"""
     
-    Content context: {keywords}
-    
-    Style requirements:
-    - Warm, inviting, and educational atmosphere
-    - Visually appealing with vibrant colors
-    - Hand-drawn or watercolor style preferred
-    - Include decorative elements related to the topic
-    - Suitable for high school students
-    - Professional yet fun and engaging
-    
-    Composition:
-    - Central focus on the main theme
-    - Decorative borders or corner elements
-    - Balance between illustration and empty space
-    - Should complement text content, not overwhelm it
-    
-    The image should capture students' attention and set a positive tone for the lesson!
+    return generate_image(prompt, aspect_ratio="16:9")
+
+
+def classify_knowledge_type(title, content):
     """
+    使用AI判断知识点类型
     
+    参数:
+        title: 知识点标题
+        content: 知识点内容
+    
+    返回:
+        知识类型: "事实性知识" | "概念性知识" | "程序性知识"
+    """
+    try:
+        print(f"  🔍 正在分析知识点类型...")
+        
+        prompt = f"""
+请判断以下知识点属于哪一类知识类型：
+
+知识点标题：{title}
+知识点内容：{content[:300]}
+
+三类知识点定义：
+1. 事实性知识：又叫事实，是指学习者通晓一门学科或解决其中的问题所必须知道的基本要素。例如：术语、具体细节、基本概念等。
+2. 概念性知识：是一种较为抽象概括的、有组织的知识类型。例如：分类、原理、理论、模型等。
+3. 程序性知识：是关于如何做事的知识，通常体现为一系列要遵循的步骤或程序。例如：方法、技能、算法、技巧等。
+
+请仔细分析知识点的内容特征，只返回以下三个选项之一：
+- 事实性知识
+- 概念性知识
+- 程序性知识
+
+你的判断（只返回类型名称，不要其他说明）：
+"""
+        
+        response = client.models.generate_content(
+            model=config.TEXT_MODEL,
+            contents=prompt
+        )
+        
+        result = response.text.strip()
+        
+        # 提取关键词
+        if "事实性知识" in result or "事实性" in result:
+            knowledge_type = "事实性知识"
+        elif "概念性知识" in result or "概念性" in result:
+            knowledge_type = "概念性知识"
+        elif "程序性知识" in result or "程序性" in result:
+            knowledge_type = "程序性知识"
+        else:
+            # 默认为概念性知识
+            knowledge_type = "概念性知识"
+        
+        print(f"  ✅ 知识类型: {knowledge_type}")
+        return knowledge_type
+        
+    except Exception as e:
+        print(f"  ⚠️ 知识类型判断失败: {e}，使用默认类型")
+        return "概念性知识"
+
+
+def generate_knowledge_type_badge(knowledge_type):
+    """
+    生成知识类型标签图片
+    
+    参数:
+        knowledge_type: "事实性知识" | "概念性知识" | "程序性知识"
+    
+    返回:
+        BytesIO对象或None
+    """
+    # 定义每种类型的视觉风格
+    type_styles = {
+        "事实性知识": {
+            "icon": "book, document, notepad",
+            "color": "green (#4CAF50)",
+            "bg_color": "light green gradient",
+            "text": "记笔记"
+        },
+        "概念性知识": {
+            "icon": "lightbulb, brain, idea",
+            "color": "blue (#2196F3)",
+            "bg_color": "light blue gradient",
+            "text": "理解"
+        },
+        "程序性知识": {
+            "icon": "gears, tools, wrench",
+            "color": "orange (#FF9800)",
+            "bg_color": "light orange gradient",
+            "text": "操作"
+        }
+    }
+    
+    style = type_styles.get(knowledge_type, type_styles["概念性知识"])
+    
+    prompt = f"""
+Create a horizontal badge/label for knowledge type classification.
+
+CRITICAL REQUIREMENTS:
+1. ASPECT RATIO: Wide horizontal rectangle (approximately 2.5:1 ratio)
+2. CHINESE TEXT: Display "{knowledge_type}" in large, bold, clear Chinese characters
+3. ICON: Small {style['icon']} icon on the left side
+4. BACKGROUND: Solid {style['color']} color or subtle {style['bg_color']}
+5. TEXT COLOR: White or very light color for maximum contrast
+6. STYLE: Flat design, modern, clean, professional
+
+LAYOUT (left to right):
+- [Icon] {knowledge_type}
+- Icon takes 20% width, text takes 80% width
+- Centered vertically
+- Rounded corners on the badge
+- No extra decorations or complex patterns
+
+DESIGN SPECIFICATIONS:
+- Font: Bold, sans-serif, highly legible
+- Icon: Simple, solid color, matching the theme
+- Background: Single color or very subtle gradient
+- Border: Optional thin white border for definition
+- Shadow: None or very subtle
+
+The badge must be SIMPLE, CLEAR, and IMMEDIATELY READABLE when placed in a small corner of a slide!
+"""
+    
+    print(f"  🎨 正在生成知识类型标签: {knowledge_type}")
+    
+    # 使用更宽的宽高比以适应占位符
     return generate_image(prompt, aspect_ratio="16:9")
 
 

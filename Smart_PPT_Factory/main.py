@@ -14,7 +14,9 @@ from ai_image_generator import (
     generate_intro_image,
     generate_knowledge_point_image,
     generate_learning_objectives_image,
-    simplify_intro_text
+    simplify_intro_text,
+    classify_knowledge_type,
+    generate_knowledge_type_badge
 )
 from slide_builder import SlideBuilder
 
@@ -109,9 +111,20 @@ def get_mindmap_image(data, target_type="learning_objectives"):
     for img_info in extracted_images:
         if img_info.get("is_mindmap", False):
             img_path = img_info["path"]
-            if os.path.exists(img_path):
-                print(f"    📊 使用提取的思维导图: {img_info['filename']}")
-                return img_path
+            
+            # 尝试多种路径方式
+            paths_to_try = [
+                img_path,  # 原始路径
+                os.path.join(config.SCRIPT_DIR, "data", "extracted_images", img_info['filename']),  # 绝对路径
+                os.path.join("data", "extracted_images", img_info['filename'])  # 相对路径
+            ]
+            
+            for path in paths_to_try:
+                if os.path.exists(path):
+                    print(f"    📊 使用提取的思维导图: {img_info['filename']}")
+                    return path
+            
+            print(f"    ⚠️ 思维导图文件不存在: {img_path}")
     
     return None
 
@@ -205,12 +218,14 @@ def generate_ppt():
     # 精简内容（如果太长）
     intro_text = simplify_intro_text(class_intro, max_length=150)
     
-    # 填充占位符
-    for ph in slide.placeholders:
+    # 填充占位符 - 根据实际位置：占位符12在上面，占位符10在中间
+    # 要求：标题在上面，内容在下面
+    placeholders = list(slide.placeholders)
+    for ph in placeholders:
         idx = ph.placeholder_format.idx
-        if idx == 10:  # 标题
+        if idx == 12:  # 最上面的文本占位符 - 标题
             ph.text = "课堂引入"
-        elif idx == 12:  # 内容
+        elif idx == 10:  # 中间的文本占位符 - 内容
             ph.text = intro_text
     
     # 生成并填充图片
@@ -256,12 +271,17 @@ def generate_ppt():
     slide_count += 1
     
     # ========== 6. 学习目标思维导图（布局5）- 图片占位符 ==========
+    print("  🗺️ [6] 学习目标思维导图")
     mindmap_img = get_mindmap_image(data, "learning_objectives")
-    if mindmap_img:
-        print("  🗺️ [6] 学习目标思维导图")
-        slide = builder.create_slide(5)
+    slide = builder.create_slide(5)
+    
+    if mindmap_img and os.path.exists(mindmap_img):
         fill_picture_placeholder(slide, mindmap_img)
-        slide_count += 1
+        print(f"    ✅ 已填充思维导图")
+    else:
+        print(f"    ⚠️ 未找到思维导图图片")
+    
+    slide_count += 1
     
     # ========== 7. 考情（布局6）==========
     print("  📊 [7] 考情分析")
@@ -314,9 +334,27 @@ def generate_ppt():
                 ph.text = kp_title
             elif idx == 12:
                 ph.text = kp_content
-        # 生成并填充图片
-        kp_img = generate_knowledge_point_image(kp_title, kp_content[:100])
-        fill_picture_placeholder(slide, kp_img)
+        
+        # 判断知识点类型并生成对应的标签图片
+        knowledge_type = classify_knowledge_type(kp_title, kp_content)
+        type_badge = generate_knowledge_type_badge(knowledge_type)
+        
+        # 保存标签图片到指定目录
+        badge_path = None
+        if type_badge:
+            badge_dir = os.path.join(config.SCRIPT_DIR, "data", "extracted_images")
+            os.makedirs(badge_dir, exist_ok=True)
+            badge_filename = f"knowledge_badge_{i}_{knowledge_type}.png"
+            badge_path = os.path.join(badge_dir, badge_filename)
+            
+            with open(badge_path, 'wb') as f:
+                f.write(type_badge.getvalue())
+            print(f"    💾 标签已保存: {badge_filename}")
+        
+        # 填充左下角的图片占位符
+        if badge_path and os.path.exists(badge_path):
+            fill_picture_placeholder(slide, badge_path)
+        
         slide_count += 1
         
         # 开口说（布局9）- 只在第一个知识点后
@@ -369,14 +407,15 @@ def generate_ppt():
     # ========== 课堂总结内容（布局14）- 有图片占位符 ==========
     print(f"  📋 [{slide_count+1}] 课堂总结内容")
     slide = builder.create_slide(14)
-    # 优先使用提取的思维导图，否则AI生成
+    
+    # 使用提取的思维导图（与学习目标思维导图相同）
     summary_mindmap = get_mindmap_image(data, "summary")
-    if summary_mindmap:
+    if summary_mindmap and os.path.exists(summary_mindmap):
         print(f"    📊 使用提取的思维导图")
         fill_picture_placeholder(slide, summary_mindmap)
     else:
-        summary_img = generate_knowledge_point_image("课堂总结", "本节课重点内容回顾")
-        fill_picture_placeholder(slide, summary_img)
+        print(f"    ⚠️ 未找到思维导图，跳过图片填充")
+    
     slide_count += 1
     
     # ========== 出门测过渡（布局15）==========
